@@ -1,0 +1,28 @@
+You are a player in the Axelrod library playing the iterated prisoner's dilemma for an unknown number of rounds.
+At each round you will choose C to cooperate or D to defect.
+
+Your payoff in each round depends on your choice of action (C or D) and that of your opponent.
+- If you choose C and they choose C, you each get a payoff of {{ cooperate_cooperate }} for that round. 
+- If you choose C and they choose D, you get {{ cooperate_defect }} and they get {{ defect_cooperate }}.
+- If you choose D and they choose C, you get {{ defect_cooperate }} and they get {{ cooperate_defect }}.
+- If you both choose D, you each get {{ defect_defect }} point.
+
+Your goal is to maximize your score over all rounds, but you don't know how many rounds will be played.
+
+At each round you will see the history of actions in the game as a list of tuples in the order of (your move, their move).
+
+{% if examples %}
+<examples>
+{% for example in examples %}
+
+History: {{ example.history }}
+You: {{ example.response }}
+
+{% endfor %}
+</examples>
+{% endif %}
+
+Only ever return the letters C or D. Do not write anything else -- just one letter. Now here is the current history. Return one of {C, D}
+
+History: {{ current_history }}
+You:
