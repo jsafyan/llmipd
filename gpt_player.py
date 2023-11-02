@@ -8,7 +8,7 @@ from llm_player import LLMPlayer
 
 class GPTPlayer(LLMPlayer):
     """
-    An class for a GPT-based player using OpenAI's API.
+    A GPT-based player using OpenAI's API.
 
     Attributes:
         model_type (str): The type or name of the model.
