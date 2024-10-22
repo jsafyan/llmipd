@@ -1,0 +1,12 @@
+[project]
+name = "llmipd"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "axelrod>=4.13.1",
+    "groq>=0.11.0",
+    "ruff>=0.7.0",
+    "tenacity>=9.0.0",
+]

@@ -1,82 +1,68 @@
-"""An abstract class for an Axelrod Player that uses an LLM to play."""
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any
-from axelrod import Player, Action
+import datetime
+from typing import List, Tuple
+
+import axelrod as axl
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
-class LLMPlayer(Player, ABC):
-    """
-    An abstract base class for players in Axelrod's tournament that interact with Large Language Models (LLMs).
-
-    Attributes:
-        model_type (str): The type or name of the LLM.
-        prompt_template (str): A template for the prompt to be sent to the LLM.
-        config (Dict[str, Any]): Additional configuration parameters for the LLM.
-    """
-
-    def __init__(self, model_type: str, prompt_template: str, **config: Dict[str, Any]) -> None:
-        """
-        Initialize the LLM player.
-
-        Args:
-            model_type (str): The type or name of the LLM.
-            prompt_template (str): A template for the prompt to be sent to the LLM.
-            **config: Additional configuration parameters for the LLM.
-        """
+class LLMPlayer(axl.Player):
+    def __init__(self, model: str, name: str = "LLM Player", max_retries: int = 5):
         super().__init__()
-        self.model_type = model_type
-        self.prompt_template = prompt_template
-        self.config = config
+        self.model = model
+        self.match_seed = None
+        self.name = name
+        self.max_retries = max_retries
+        self.log_file = f"llm_api_log_{datetime.datetime.now().strftime('%Y%m%d')}.csv"
+        self._initialize_log_file()
 
-    @abstractmethod
-    def strategy(self, opponent: Player) -> Action:
-        """
-        Determine the next move in the game based on the history of moves.
+    def set_seed(self, seed):
+        self.match_seed = seed
 
-        Args:
-            opponent (Player): The opponent player.
-
-        Returns:
-            Action: The next move (Action.C for cooperate or Action.D for defect).
-        """
-        prompt = self.prepare_prompt(self.history, opponent.history)
-        response = self.prompt_llm(prompt)
-        move = self.parse_response(response)
+    def strategy(self, opponent: axl.Player) -> str:
+        history = list(zip(self.history, opponent.history))
+        move = self.get_move(history, opponent.name)
         return move
 
-    @abstractmethod
-    def prepare_prompt(self, player_history: List[Action], opponent_history: List[Action]) -> str:
-        """
-        Prepare the prompt to be sent to the LLM based on the history of moves.
+    @retry(
+        stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=64)
+    )
+    def get_move(self, history: List[Tuple[str, str]], opponent_name: str) -> str:
+        raise NotImplementedError("Subclasses should implement get_move method")
 
-        Args:
-            player_history (List[Action]): The history of moves of the player.
-            opponent_history (List[Action]): The history of moves of the opponent.
+    def _initialize_log_file(self):
+        with open(self.log_file, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                [
+                    "date",
+                    "opponent_name",
+                    "match_history",
+                    "model_name",
+                    "llm_move",
+                    "error",
+                    "additional_info",
+                ]
+            )
 
-        Returns:
-            str: The prepared prompt.
-        """
-
-    @abstractmethod
-    def prompt_llm(self, prompt: str) -> str:
-        """
-        Send the prompt to the LLM and receive the response.
-
-        Args:
-            prompt (str): The prompt to be sent to the LLM.
-
-        Returns:
-            str: The response from the LLM.
-        """
-
-    @abstractmethod
-    def parse_response(self, response: str) -> Action:
-        """
-        Parse the response from the LLM to extract the next move.
-
-        Args:
-            response (str): The response from the LLM.
-
-        Returns:
-            Action: The next move (Action.C for cooperate or Action.D for defect).
-        """
+    def _log_api_call(
+        self,
+        opponent_name: str,
+        history: List[Tuple[str, str]],
+        move: str,
+        error: str = "",
+        additional_info: str = "",
+    ):
+        with open(self.log_file, "a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                [
+                    datetime.datetime.now().isoformat(),
+                    opponent_name,
+                    str(history),
+                    self.model,
+                    move,
+                    error,
+                    additional_info,
+                ]
+            )
+>>>>>>> 6efe62d (Adds a base LLM player and Groq player.)
