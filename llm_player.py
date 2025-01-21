@@ -7,12 +7,19 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 class LLMPlayer(axl.Player):
-    def __init__(self, model: str, name: str = "LLM Player", max_retries: int = 5):
+    def __init__(
+        self,
+        model: str,
+        name: str = "LLM Player",
+        max_retries: int = 5,
+        system_instructions: str = None,
+    ):
         super().__init__()
         self.model = model
         self.match_seed = None
         self.name = name
         self.max_retries = max_retries
+        self.system_instructions = system_instructions
         self.log_file = f"llm_api_log_{datetime.datetime.now().strftime('%Y%m%d')}.csv"
         self._initialize_log_file()
 

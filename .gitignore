@@ -309,6 +309,7 @@ __pycache__/
 *.pyo
 *.python-version
 *.log
+*.csv
 
 # uv tool files
 uv.lock

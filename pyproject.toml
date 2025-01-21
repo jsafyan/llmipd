@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=0.43.1",
     "axelrod>=4.13.1",
     "groq>=0.11.0",
+    "marimo>=0.10.15",
     "ruff>=0.7.0",
     "tenacity>=9.0.0",
 ]

@@ -4,43 +4,43 @@ import traceback
 from typing import List, Tuple
 
 import axelrod as axl
-from groq import Groq, RateLimitError
+import anthropic
+from anthropic.types import ContentBlock
 
 from llm_player import LLMPlayer
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("Please set the GROQ_API_KEY environment variable")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+if not ANTHROPIC_API_KEY:
+    raise ValueError("Please set the ANTHROPIC_API_KEY environment variable")
 
-client = Groq(api_key=GROQ_API_KEY)
+client = anthropic.Anthropic()
 
 # Load default system prompt
 with open("prompts/system_prompt.txt", "r") as f:
     DEFAULT_SYSTEM_INSTRUCTIONS = f.read()
 
-PROMPT_TEMPLATE = """
-Think step-by-step about the match thus far, your strategy, and your reasoning for your move.
+PROMPT_TEMPLATE = """Think step-by-step about the match thus far, your strategy, and your reasoning for your move. Current match history: {history}
 
-Current match history: {history}
+Your response must be a valid JSON object with exactly two fields:
+1. "analysis": A string containing your reasoning
+2. "move": Either "C" or "D"
 
-Respond with your analysis and next move in the following JSON format:
-{{
-  "analysis": "Your step-by-step reasoning here",
-  "move": "C or D"
-}}
-"""
+Example response:
+{{"analysis": "Based on the empty history, I will cooperate on the first move to establish trust", "move": "C"}}
+
+Ensure your response is a single line of valid JSON. Do not include any other text before or after the JSON."""
 
 
-class GroqPlayer(LLMPlayer):
+class AnthropicPlayer(LLMPlayer):
     def __init__(
         self,
-        model="llama-3.1-8b-instant",
+        model="claude-3-haiku-20241022",
         max_retries: int = 5,
         system_instructions: str = None,
     ):
         super().__init__(
             model=model,
-            name="Groq Player",
+            name="Claude Player",
             max_retries=max_retries,
             system_instructions=system_instructions or DEFAULT_SYSTEM_INSTRUCTIONS,
         )
@@ -54,21 +54,26 @@ class GroqPlayer(LLMPlayer):
             ]
             prompt = PROMPT_TEMPLATE.format(history=history_str)
 
-            response = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": self.system_instructions},
-                    {"role": "user", "content": prompt},
-                ],
+            # Create system message properly structured for caching
+            system_content = [
+                {
+                    "type": "text",
+                    "text": self.system_instructions,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
+
+            response = client.messages.create(
                 model=self.model,
-                temperature=0,
                 max_tokens=1000,
-                response_format={"type": "json_object"},
-                seed=self.match_seed,
+                temperature=0,
+                system=system_content,
+                messages=[{"role": "user", "content": prompt}],
             )
 
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(response.content[0].text)
             move_str = result["move"].upper()
-            additional_info = response.choices[0].message.content
+            additional_info = response.content[0].text
 
             if move_str == "C":
                 move = axl.Action.C
@@ -83,8 +88,8 @@ class GroqPlayer(LLMPlayer):
             )
             return move
 
-        except RateLimitError as e:
-            error_message = f"Rate limit reached: {e}"
+        except anthropic.APIError as e:
+            error_message = f"API error: {e}"
             raise
         except Exception as e:
             error_message = f"Error getting move: {str(e)}\n{traceback.format_exc()}"
