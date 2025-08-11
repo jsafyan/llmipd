@@ -5,10 +5,18 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "anthropic>=0.43.1",
     "axelrod>=4.13.1",
-    "groq>=0.11.0",
     "marimo>=0.10.15",
     "ruff>=0.7.0",
     "tenacity>=9.0.0",
+    "litellm>=1.36.0",
+    "pydantic>=2.7.0",
+    "coverage>=7.5.4",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
