@@ -7,10 +7,11 @@ app = marimo.App(width="medium")
 @app.cell
 def __():
     import marimo as mo
-    import pandas as pd
     import matplotlib.pyplot as plt
-    import scipy
     import numpy as np
+    import pandas as pd
+    import scipy
+
     return mo, np, pd, plt, scipy
 
 
@@ -26,13 +27,14 @@ def __(pd):
 @app.cell
 def __():
     from scipy.linalg import interpolative as sli
+
     return (sli,)
 
 
 @app.cell
 def __(df, sli):
     mat = df.values
-    k, idx, proj = sli.interp_decomp(mat, .15)
+    k, idx, proj = sli.interp_decomp(mat, 0.15)
     return idx, k, mat, proj
 
 
@@ -51,14 +53,12 @@ def __(idx, k, mat, proj, sli):
 
 @app.cell
 def __(recon):
-    recon
-    return
+    return recon
 
 
 @app.cell
 def __(mat):
-    mat
-    return
+    return mat
 
 
 @app.cell
